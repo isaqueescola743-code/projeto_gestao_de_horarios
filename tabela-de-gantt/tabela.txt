@@ -1,0 +1,9 @@
+Atividade                   | Início     | Duração | Cronograma
+---------------------------------------------------------------
+Planejamento + modelagem     | 17/03/26   | 1 dia   | #
+Configuração do ambiente     | 17/03/26   | 1 dia   | #
+Backend Node.js + MariaDB    | 18/03/26   | 1 dia   | #
+Frontend responsivo          | 18/03/26   | 1 dia   | #
+Integração completa          | 19/03/26   | 1 dia   | #
+Documentação                 | 19/03/26   | 2 dias  | ##
+Ajustes finais               | 20/03/26   | 1 dia   | #
