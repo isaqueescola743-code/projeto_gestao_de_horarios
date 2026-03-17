@@ -1,57 +1,86 @@
-const express = require('express');
-const path = require('path');
-
-const app = express();
-const PORT = 3000;
-
-// Permite receber JSON do frontend
-app.use(express.json());
-
-// Pasta pública (HTML, CSS, JS)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Banco de dados em memória
-let professores = [
-    { id: 1, nome: "João" },
-    { id: 2, nome: "Maria" }
-];
-
-let turmas = [
-    { id: 1, nome: "10A" },
-    { id: 2, nome: "10B" }
-];
-
-let disciplinas = [
-    { id: 1, nome: "Matemática", professorId: 1 },
-    { id: 2, nome: "Português", professorId: 2 },
-    { id: 3, nome: "História", professorId: 2 }
-];
-
-let horarios = [
-    { hora: "08:00-09:00", dia: "Segunda", turmaId: 1, disciplinaId: 1 },
-    { hora: "09:00-10:00", dia: "Segunda", turmaId: 1, disciplinaId: 2 },
-    { hora: "08:00-09:00", dia: "Terça", turmaId: 2, disciplinaId: 3 }
-];
-
-// API para obter dados
-app.get('/api/dados', (req, res) => {
-    res.json({ professores, turmas, disciplinas, horarios });
-});
-
-// API para adicionar aula
-app.post('/api/adicionar-aula', (req, res) => {
-    const { turmaId, disciplinaId, dia, hora } = req.body;
-
-    const conflito = horarios.find(a => a.hora === hora && a.dia === dia && a.turmaId === turmaId);
-    if (conflito) {
-        return res.status(400).json({ mensagem: "Essa turma já tem uma aula nesse horário!" });
+async function carregarDados() {
+    try {
+        const res = await fetch('/api/dados');
+        const data = await res.json();
+        preencherListas(data);
+        preencherTabela(data);
+    } catch (err) {
+        console.error('Erro ao carregar dados:', err);
     }
+}
 
-    horarios.push({ turmaId, disciplinaId, dia, hora });
-    res.json({ mensagem: "Aula adicionada com sucesso!" });
+function preencherListas(data) {
+    const selectTurma = document.getElementById('select-turma');
+    const selectDisciplina = document.getElementById('select-disciplina');
+    const selectProfessor = document.getElementById('select-professor');
+
+    selectTurma.innerHTML = '';
+    selectDisciplina.innerHTML = '';
+    selectProfessor.innerHTML = '<option value="">Selecione um Professor</option>';
+
+    data.turmas.forEach(t => {
+        selectTurma.innerHTML += `<option value="${t.id}">${t.nome}</option>`;
+    });
+
+    data.disciplinas.forEach(d => {
+        selectDisciplina.innerHTML += `<option value="${d.id}">${d.nome}</option>`;
+    });
+
+    data.professores.forEach(p => {
+        selectProfessor.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+    });
+}
+
+function preencherTabela(data) {
+    const tbody = document.querySelector('#tabela-horarios tbody');
+    tbody.innerHTML = '';
+
+    const horas = ['08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00'];
+    const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+
+    horas.forEach(hora => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${hora}</td>`;
+
+        dias.forEach(dia => {
+            const td = document.createElement('td');
+            // Formata a hora para comparar com o banco (HH:mm:ss)
+            const horaInicioFoco = hora.split('-')[0] + ':00';
+            
+            const aula = data.horarios.find(a => a.hora_inicio === horaInicioFoco && a.dia_semana === dia);
+
+            if (aula) {
+                const disc = data.disciplinas.find(d => d.id === aula.disciplina_id);
+                const prof = data.professores.find(p => p.id === aula.professor_id);
+                const turm = data.turmas.find(t => t.id === aula.turma_id);
+                td.innerHTML = `<strong>${disc.nome}</strong><br>${prof.nome}<br><small>${turm.nome}</small>`;
+                td.classList.add('tem-aula');
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+document.getElementById('form-aula').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+        turmaId: document.getElementById('select-turma').value,
+        disciplinaId: document.getElementById('select-disciplina').value,
+        professorId: document.getElementById('select-professor').value,
+        dia: document.getElementById('select-dia').value,
+        hora: document.getElementById('select-hora').value
+    };
+
+    const res = await fetch('/api/adicionar-aula', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+    });
+
+    const result = await res.json();
+    alert(result.mensagem);
+    if (res.ok) carregarDados();
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`✅ Servidor Node.js rodando em: http://localhost:${PORT}`);
-});
+carregarDados();
