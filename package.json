@@ -1,0 +1,14 @@
+{
+  "name": "projeto_gestao_de_horarios",
+  "version": "1.0.0",
+  "description": "Site de gestão de horários de professores com Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Seu Nome",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
